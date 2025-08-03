@@ -7,13 +7,17 @@ from collections import defaultdict
 from openai import OpenAI
 
 # --- Streamlit Setup ---
-st.set_page_config(page_title="Diderot AI: Democratizing News :)", layout="wide")
+st.set_page_config(page_title="Diderot AI: Democratizing News", layout="wide")
 st.title("Diderot AI: Democratizing News")
 st.write("Fact-based summaries with perspectives across multiple sources.")
 
 # --- User Input Layer ---
 st.sidebar.header("🔎 Search a Topic")
-user_topic = st.sidebar.text_input("Enter a topic to focus on (optional):").strip().lower()
+user_topic = st.sidebar.text_input("Enter a topic to focus on (required):").strip().lower()
+
+if not user_topic:
+    st.info("Please enter a keyword to start generating fact-based summaries.")
+    st.stop()
 
 # --- OpenAI Setup ---
 api_key = os.getenv("OPENAI_API_KEY") or st.secrets.get("OPENAI_API_KEY")
@@ -35,8 +39,11 @@ CACHE_FILE = "article_cache.json"
 # --- Simple JSON Cache ---
 def load_cache():
     if os.path.exists(CACHE_FILE):
-        with open(CACHE_FILE, "r") as f:
-            return json.load(f)
+        try:
+            with open(CACHE_FILE, "r") as f:
+                return json.load(f)
+        except json.JSONDecodeError:
+            return {}
     return {}
 
 def save_cache(cache):
@@ -49,7 +56,10 @@ cache = load_cache()
 def fetch_articles(max_per_feed=5):
     articles = []
     for feed in RSS_FEEDS:
-        parsed = feedparser.parse(feed)
+        try:
+            parsed = feedparser.parse(feed)
+        except Exception:
+            continue
         for entry in parsed.entries[:max_per_feed]:
             articles.append({
                 "title": entry.title,
@@ -63,10 +73,13 @@ def fetch_articles(max_per_feed=5):
 def cluster_by_keyword(articles):
     clusters = defaultdict(list)
     for art in articles:
-        keywords = [w.lower().strip(".,!?") for w in art["title"].split() if len(w) > 4]
+        title_lower = art["title"].lower()
+        keywords = [w.strip(".,!?") for w in title_lower.split() if len(w) > 4]
         for kw in keywords:
             clusters[kw].append(art)
-    filtered = {k: v for k, v in clusters.items() if len({a["source"] for a in v}) >= 2}
+    filtered = {
+        k: v for k, v in clusters.items() if len({a["source"] for a in v}) >= 2
+    }
     return filtered
 
 # --- Step 3: AI Fact-Based Multi-Perspective Summary ---
@@ -106,22 +119,20 @@ def generate_fact_perspectives(topic, articles):
 articles = fetch_articles()
 clusters = cluster_by_keyword(articles)
 
-displayed = False
+shown_any = False
 
 if not clusters:
     st.warning("No overlapping topics found across sources right now.")
 else:
-    for topic, group in list(clusters.items())[:10]:  # allow more clusters to search through
-        # If user entered a topic, filter by keyword match
-        if user_topic and user_topic not in topic:
+    for topic, group in list(clusters.items()):
+        if user_topic not in topic:
             continue
 
-        displayed = True
+        shown_any = True
         st.subheader(f"Topic: {topic}")
         for art in group:
             st.markdown(f"- [{art['title']}]({art['link']})")
 
-        # Cache key = topic + date
         today = time.strftime("%Y-%m-%d")
         cache_key = f"{topic}-{today}"
 
@@ -136,5 +147,5 @@ else:
         st.markdown(summary)
         st.markdown("---")
 
-if not displayed:
+if not shown_any:
     st.info("No clustered topics matched your search today.")
