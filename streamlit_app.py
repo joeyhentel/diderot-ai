@@ -7,9 +7,13 @@ from collections import defaultdict
 from openai import OpenAI
 
 # --- Streamlit Setup ---
-st.set_page_config(page_title="Multi-Source Fact-Based News", layout="wide")
+st.set_page_config(page_title="Diderot AI: Democratizing News :)", layout="wide")
 st.title("Diderot AI: Democratizing News")
 st.write("Fact-based summaries with perspectives across multiple sources.")
+
+# --- User Input Layer ---
+st.sidebar.header("🔎 Search a Topic")
+user_topic = st.sidebar.text_input("Enter a topic to focus on (optional):").strip().lower()
 
 # --- OpenAI Setup ---
 api_key = os.getenv("OPENAI_API_KEY") or st.secrets.get("OPENAI_API_KEY")
@@ -22,7 +26,7 @@ client = OpenAI(api_key=api_key)
 # --- RSS Feeds ---
 RSS_FEEDS = [
     "https://rss.cnn.com/rss/edition.rss",
-    "https://moxie.foxnews.com/google-publisher/latest.xml"
+    "https://moxie.foxnews.com/google-publisher/latest.xml",
     "https://feeds.reuters.com/reuters/topNews"
 ]
 
@@ -59,11 +63,9 @@ def fetch_articles(max_per_feed=5):
 def cluster_by_keyword(articles):
     clusters = defaultdict(list)
     for art in articles:
-        # Simple keywords from title
         keywords = [w.lower().strip(".,!?") for w in art["title"].split() if len(w) > 4]
         for kw in keywords:
             clusters[kw].append(art)
-    # Filter clusters with at least 2 different sources
     filtered = {k: v for k, v in clusters.items() if len({a["source"] for a in v}) >= 2}
     return filtered
 
@@ -83,11 +85,11 @@ def generate_fact_perspectives(topic, articles):
     - Fact 1
     - Fact 2
 
-    ### Title of Perspective
+    ### Viewpoint A
     - Fact-based perspective A
     - Supporting facts
 
-    ### Title of opposing perspective
+    ### Viewpoint B
     - Fact-based perspective B
     - Supporting facts
 
@@ -104,18 +106,25 @@ def generate_fact_perspectives(topic, articles):
 articles = fetch_articles()
 clusters = cluster_by_keyword(articles)
 
+displayed = False
+
 if not clusters:
     st.warning("No overlapping topics found across sources right now.")
 else:
-    for topic, group in list(clusters.items())[:5]:  # show top 5 clusters
+    for topic, group in list(clusters.items())[:10]:  # allow more clusters to search through
+        # If user entered a topic, filter by keyword match
+        if user_topic and user_topic not in topic:
+            continue
+
+        displayed = True
         st.subheader(f"Topic: {topic}")
         for art in group:
             st.markdown(f"- [{art['title']}]({art['link']})")
-        
+
         # Cache key = topic + date
         today = time.strftime("%Y-%m-%d")
         cache_key = f"{topic}-{today}"
-        
+
         if cache_key in cache:
             summary = cache[cache_key]
         else:
@@ -123,6 +132,9 @@ else:
                 summary = generate_fact_perspectives(topic, group)
                 cache[cache_key] = summary
                 save_cache(cache)
-        
+
         st.markdown(summary)
         st.markdown("---")
+
+if not displayed:
+    st.info("No clustered topics matched your search today.")
