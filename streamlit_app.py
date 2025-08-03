@@ -23,8 +23,6 @@ client = OpenAI(api_key=api_key)
 RSS_FEEDS = [
     "https://rss.cnn.com/rss/edition.rss",
     "https://moxie.foxnews.com/google-publisher/latest.xml"
-    "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml"
-    "https://nypost.com/feed/"
 ]
 
 def fetch_articles(max_articles=3):
