@@ -5,11 +5,19 @@ import os
 
 # --- Page Setup ---
 st.set_page_config(page_title="AI Multi-Perspective News", layout="wide")
-st.title("📰 AI Multi-Perspective News")
-st.write("Fetches top headlines and generates a neutral summary plus an opposing perspective using AI.")
+st.title("📰 AI Multi-Perspective News (Fact-Based)")
+st.write(
+    "This app fetches top headlines and generates a structured summary with verifiable facts "
+    "and two different fact-based perspectives."
+)
 
 # --- OpenAI Setup ---
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+api_key = os.getenv("OPENAI_API_KEY") or st.secrets.get("OPENAI_API_KEY")
+if not api_key:
+    st.error("No OpenAI API key found. Add it in Streamlit Cloud → App → Settings → Secrets.")
+    st.stop()
+
+client = OpenAI(api_key=api_key)
 
 # --- RSS Feeds ---
 RSS_FEEDS = [
@@ -30,16 +38,35 @@ def fetch_articles(max_articles=3):
             })
     return articles
 
-def summarize_and_opposing(text):
-    """Generate a neutral summary + opposing view."""
+def generate_fact_based_perspectives(article_text):
+    """Generate fact-based summary with two factual viewpoints."""
     prompt = f"""
-    Summarize this news in 2 sentences (Neutral Summary).
-    Then provide an opposing or alternative perspective in 2 sentences (Opposing View).
-    Article: {text}
+    You are a fact-focused analyst creating a multi-perspective news summary.
+
+    1. List ONLY verifiable facts from the article.
+    2. Then provide two different fact-based viewpoints, each backed by supporting facts.
+    3. Do not speculate or add opinions. Only use factual information.
+
+    Output format:
+
+    ### Facts
+    - Fact 1
+    - Fact 2
+
+    ### Viewpoint A
+    - Fact-based perspective
+    - Supporting fact(s)
+
+    ### Viewpoint B
+    - Fact-based perspective
+    - Supporting fact(s)
+
+    Article:
+    {article_text}
     """
     resp = client.chat.completions.create(
         model="gpt-4o-mini",
-        messages=[{"role":"user","content":prompt}]
+        messages=[{"role": "user", "content": prompt}]
     )
     return resp.choices[0].message.content.strip()
 
@@ -50,8 +77,11 @@ if articles:
     for art in articles:
         st.subheader(art["title"])
         st.markdown(f"[Read Full Article]({art['link']})")
-        ai_output = summarize_and_opposing(art["summary"])
-        st.write(ai_output)
+
+        with st.spinner("Analyzing article..."):
+            fact_perspectives = generate_fact_based_perspectives(art["summary"])
+        
+        st.markdown(fact_perspectives)
         st.markdown("---")
 else:
     st.warning("No articles found. Try again later.")
