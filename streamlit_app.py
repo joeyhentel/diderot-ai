@@ -22,7 +22,9 @@ client = OpenAI(api_key=api_key)
 # --- RSS Feeds ---
 RSS_FEEDS = [
     "https://rss.cnn.com/rss/edition.rss",
-    "https://feeds.bbci.co.uk/news/rss.xml"
+    "https://moxie.foxnews.com/google-publisher/latest.xml"
+    "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml"
+    "https://nypost.com/feed/"
 ]
 
 def fetch_articles(max_articles=3):
@@ -53,11 +55,11 @@ def generate_fact_based_perspectives(article_text):
     - Fact 1
     - Fact 2
 
-    ### Viewpoint A
+    ### Viewpoint A (title the viewpoint what it is)
     - Fact-based perspective
     - Supporting fact(s)
 
-    ### Viewpoint B
+    ### Viewpoint B (title the viewpoint what it is)
     - Fact-based perspective
     - Supporting fact(s)
 
