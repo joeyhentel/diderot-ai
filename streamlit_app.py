@@ -1,15 +1,15 @@
 import streamlit as st
 import feedparser
-from openai import OpenAI
 import os
+import json
+import time
+from collections import defaultdict
+from openai import OpenAI
 
-# --- Page Setup ---
-st.set_page_config(page_title="AI Multi-Perspective News", layout="wide")
-st.title("📰 AI Multi-Perspective News (Fact-Based)")
-st.write(
-    "This app fetches top headlines and generates a structured summary with verifiable facts "
-    "and two different fact-based perspectives."
-)
+# --- Streamlit Setup ---
+st.set_page_config(page_title="Multi-Source Fact-Based News", layout="wide")
+st.title("Diderot AI: Democratizing News")
+st.write("Fact-based summaries with perspectives across multiple sources.")
 
 # --- OpenAI Setup ---
 api_key = os.getenv("OPENAI_API_KEY") or st.secrets.get("OPENAI_API_KEY")
@@ -23,46 +23,76 @@ client = OpenAI(api_key=api_key)
 RSS_FEEDS = [
     "https://rss.cnn.com/rss/edition.rss",
     "https://moxie.foxnews.com/google-publisher/latest.xml"
+    "https://feeds.reuters.com/reuters/topNews"
 ]
 
-def fetch_articles(max_articles=3):
-    """Fetch a few top articles from RSS feeds."""
+CACHE_FILE = "article_cache.json"
+
+# --- Simple JSON Cache ---
+def load_cache():
+    if os.path.exists(CACHE_FILE):
+        with open(CACHE_FILE, "r") as f:
+            return json.load(f)
+    return {}
+
+def save_cache(cache):
+    with open(CACHE_FILE, "w") as f:
+        json.dump(cache, f)
+
+cache = load_cache()
+
+# --- Step 1: Fetch Articles ---
+def fetch_articles(max_per_feed=5):
     articles = []
     for feed in RSS_FEEDS:
         parsed = feedparser.parse(feed)
-        for entry in parsed.entries[:max_articles]:
+        for entry in parsed.entries[:max_per_feed]:
             articles.append({
                 "title": entry.title,
                 "link": entry.link,
-                "summary": entry.get("summary", "")
+                "summary": entry.get("summary", ""),
+                "source": feed
             })
     return articles
 
-def generate_fact_based_perspectives(article_text):
-    """Generate fact-based summary with two factual viewpoints."""
+# --- Step 2: Cluster Articles by Simple Keywords ---
+def cluster_by_keyword(articles):
+    clusters = defaultdict(list)
+    for art in articles:
+        # Simple keywords from title
+        keywords = [w.lower().strip(".,!?") for w in art["title"].split() if len(w) > 4]
+        for kw in keywords:
+            clusters[kw].append(art)
+    # Filter clusters with at least 2 different sources
+    filtered = {k: v for k, v in clusters.items() if len({a["source"] for a in v}) >= 2}
+    return filtered
+
+# --- Step 3: AI Fact-Based Multi-Perspective Summary ---
+def generate_fact_perspectives(topic, articles):
+    combined_text = "\n\n".join([f"{a['source']} - {a['title']}: {a['summary']}" for a in articles])
     prompt = f"""
-    You are a fact-focused analyst creating a multi-perspective news summary.
+    You are a fact-focused analyst.
 
-    1. List ONLY verifiable facts from the article.
-    2. Then provide two different fact-based viewpoints, each backed by supporting facts.
-    3. Do not speculate or add opinions. Only use factual information.
+    Articles on topic: {topic}
 
-    Output format:
+    1. Extract only verifiable facts across all sources.
+    2. Provide two different fact-based perspectives, each supported by facts.
+    3. Output in this format:
 
     ### Facts
     - Fact 1
     - Fact 2
 
-    ### Viewpoint A (title the viewpoint what it is)
-    - Fact-based perspective
-    - Supporting fact(s)
+    ### Title of Perspective
+    - Fact-based perspective A
+    - Supporting facts
 
-    ### Viewpoint B (title the viewpoint what it is)
-    - Fact-based perspective
-    - Supporting fact(s)
+    ### Title of opposing perspective
+    - Fact-based perspective B
+    - Supporting facts
 
-    Article:
-    {article_text}
+    Articles:
+    {combined_text}
     """
     resp = client.chat.completions.create(
         model="gpt-4o-mini",
@@ -70,18 +100,29 @@ def generate_fact_based_perspectives(article_text):
     )
     return resp.choices[0].message.content.strip()
 
-# --- App Logic ---
+# --- Step 4: Render ---
 articles = fetch_articles()
+clusters = cluster_by_keyword(articles)
 
-if articles:
-    for art in articles:
-        st.subheader(art["title"])
-        st.markdown(f"[Read Full Article]({art['link']})")
-
-        with st.spinner("Analyzing article..."):
-            fact_perspectives = generate_fact_based_perspectives(art["summary"])
-        
-        st.markdown(fact_perspectives)
-        st.markdown("---")
+if not clusters:
+    st.warning("No overlapping topics found across sources right now.")
 else:
-    st.warning("No articles found. Try again later.")
+    for topic, group in list(clusters.items())[:5]:  # show top 5 clusters
+        st.subheader(f"Topic: {topic}")
+        for art in group:
+            st.markdown(f"- [{art['title']}]({art['link']})")
+        
+        # Cache key = topic + date
+        today = time.strftime("%Y-%m-%d")
+        cache_key = f"{topic}-{today}"
+        
+        if cache_key in cache:
+            summary = cache[cache_key]
+        else:
+            with st.spinner("Analyzing topic across sources..."):
+                summary = generate_fact_perspectives(topic, group)
+                cache[cache_key] = summary
+                save_cache(cache)
+        
+        st.markdown(summary)
+        st.markdown("---")
