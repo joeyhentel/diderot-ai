@@ -1,3 +1,9 @@
-feedparser
-openai
-streamlit
+feedparser==6.0.10
+openai==1.3.7
+streamlit==1.28.1
+autogen==0.2.0
+requests==2.31.0
+beautifulsoup4==4.12.2
+python-dateutil==2.8.2
+newsapi-python==0.2.6
+lxml==4.9.3
