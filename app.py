@@ -2,7 +2,7 @@ import streamlit as st
 import json
 import os
 from datetime import datetime, date
-from pipeline import NewsAnalysisPipeline
+from simple_pipeline import SimpleNewsAnalysisPipeline
 import time
 
 # Page configuration
@@ -162,7 +162,7 @@ def main():
             
             try:
                 # Initialize pipeline
-                pipeline = NewsAnalysisPipeline()
+                pipeline = SimpleNewsAnalysisPipeline()
                 
                 # Generate report with progress updates
                 status_text.text("🔍 Finding top headlines...")

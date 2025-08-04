@@ -54,17 +54,10 @@ def test_imports():
         return False
     
     try:
-        from agents import news_agents, data_fetcher
-        print("✅ Agents imported successfully")
+        from simple_pipeline import SimpleNewsAnalysisPipeline
+        print("✅ Simple Pipeline imported successfully")
     except ImportError as e:
-        print(f"❌ Agents import failed: {e}")
-        return False
-    
-    try:
-        from pipeline import NewsAnalysisPipeline
-        print("✅ Pipeline imported successfully")
-    except ImportError as e:
-        print(f"❌ Pipeline import failed: {e}")
+        print(f"❌ Simple Pipeline import failed: {e}")
         return False
     
     return True
@@ -124,47 +117,15 @@ def test_data_fetcher():
         print(f"❌ RSS feed test failed: {e}")
         return False
 
-def test_agent_initialization():
-    """Test agent initialization"""
-    print("\n🤖 Testing agent initialization...")
-    
-    try:
-        from agents import news_agents
-        
-        # Test that all agents are initialized
-        agents = [
-            news_agents.headline_finder,
-            news_agents.article_finder,
-            news_agents.research_compiler,
-            news_agents.determinator,
-            news_agents.flaws_agent,
-            news_agents.birds_eye,
-            news_agents.journalist,
-            news_agents.user_proxy
-        ]
-        
-        for agent in agents:
-            if agent is not None:
-                print(f"✅ {agent.name} initialized")
-            else:
-                print(f"❌ {agent.name} failed to initialize")
-                return False
-        
-        return True
-        
-    except Exception as e:
-        print(f"❌ Agent initialization test failed: {e}")
-        return False
-
-def test_pipeline():
+def test_pipeline_initialization():
     """Test pipeline initialization"""
     print("\n🔗 Testing pipeline initialization...")
     
     try:
-        from pipeline import NewsAnalysisPipeline
+        from simple_pipeline import SimpleNewsAnalysisPipeline
         
-        pipeline = NewsAnalysisPipeline()
-        print("✅ Pipeline initialized successfully")
+        pipeline = SimpleNewsAnalysisPipeline()
+        print("✅ Simple Pipeline initialized successfully")
         
         # Test fallback headlines
         fallback_headlines = pipeline._get_fallback_headlines()
@@ -176,6 +137,8 @@ def test_pipeline():
     except Exception as e:
         print(f"❌ Pipeline test failed: {e}")
         return False
+
+
 
 def test_directories():
     """Test required directories"""
@@ -205,8 +168,7 @@ def main():
         ("Imports", test_imports),
         ("Configuration", test_configuration),
         ("Data Fetcher", test_data_fetcher),
-        ("Agent Initialization", test_agent_initialization),
-        ("Pipeline", test_pipeline),
+        ("Pipeline Initialization", test_pipeline_initialization),
         ("Directories", test_directories)
     ]
     

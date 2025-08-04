@@ -1,4 +1,8 @@
-import autogen
+try:
+    import autogen
+except ImportError:
+    import pyautogen as autogen
+
 from typing import List, Dict, Any
 import json
 import feedparser

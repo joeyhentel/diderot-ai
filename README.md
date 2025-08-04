@@ -1,50 +1,50 @@
 # Diderot AI: Multi-Perspective Daily News
 
-A sophisticated Streamlit web application that generates factual, non-biased daily news reports with multi-perspective analysis using AG2 (AutoGen 2) multi-agent workflows.
+A sophisticated Streamlit web application that generates factual, non-biased daily news reports with multi-perspective analysis using OpenAI's GPT models.
 
 ## 🎯 Features
 
-- **Multi-Agent Workflow**: 7 specialized AI agents working together
+- **AI-Powered Analysis**: Direct OpenAI GPT model integration for intelligent analysis
 - **Multi-Perspective Analysis**: Left, Center, and Right perspectives for political/world news
 - **Factual Reporting**: Neutral summaries with source verification
 - **Daily Caching**: Reports cached by date to avoid regeneration
 - **Beautiful UI**: Modern Streamlit interface with responsive design
 - **Real-time RSS Integration**: Live news feeds from major sources
 
-## 🤖 Agent Architecture
+## 🤖 AI Analysis Pipeline
 
-### 1. **HeadlineFinderAgent**
-- Fetches top 10 trending headlines from Google News RSS
+### 1. **Headline Generation**
+- Generates current, significant headlines using AI
 - Categorizes headlines as 'world', 'politics', or 'other'
-- Filters for significant political and world issues
+- Focuses on major political and world issues
 
-### 2. **ArticleFinderAgent**
-- Gathers articles from across the political spectrum:
+### 2. **Source Simulation**
+- Creates diverse news sources across the political spectrum:
   - **Left**: CNN, New York Times, MSNBC
   - **Center**: Reuters, Associated Press, BBC News
   - **Right**: Fox News, New York Post, Wall Street Journal
 
-### 3. **ResearchCompilerAgent**
-- Extracts verifiable facts and opinions from articles
+### 3. **Factual Analysis**
+- Extracts verifiable facts and identifies opinions
 - Cross-references information across sources
 - Identifies potential bias and editorial content
 
-### 4. **DeterminatorAgent**
+### 4. **Perspective Analysis**
 - Identifies solid facts consistent across multiple sources
 - Maps sources to political perspectives
 - Analyzes justifications and rationales
 
-### 5. **FlawsAgent**
+### 5. **Flaw Detection**
 - Identifies potential logical fallacies
 - Notes missing context or counterarguments
 - Points out potential bias or selective reporting
 
-### 6. **BirdsEyeAgent**
+### 6. **Comprehensive Synthesis**
 - Consolidates all perspectives into comprehensive view
 - Names perspectives based on actual ideological stances
 - Orders from Left → Center → Right when political
 
-### 7. **JournalistAgent**
+### 7. **Professional Reporting**
 - Generates final factual reports
 - Creates neutral summaries and multi-perspective analysis
 - Ensures professional journalistic standards
@@ -109,8 +109,7 @@ For each headline, the system generates:
 ```
 diderot-ai/
 ├── app.py                 # Main Streamlit application
-├── agents.py              # AG2 agent definitions
-├── pipeline.py            # Multi-agent workflow orchestration
+├── simple_pipeline.py     # AI-powered analysis pipeline
 ├── config.py              # Configuration management
 ├── requirements.txt       # Python dependencies
 ├── README.md             # This file
@@ -138,13 +137,13 @@ NEWS_SOURCES = {
 }
 ```
 
-### Modifying Agent Behavior
+### Modifying AI Behavior
 
-Each agent's behavior is defined in `agents.py`. You can modify:
+The AI analysis behavior is defined in `simple_pipeline.py`. You can modify:
 
-- System messages for different analysis approaches
+- System prompts for different analysis approaches
 - Output formats for different report structures
-- Agent interaction patterns
+- Analysis parameters and temperature settings
 
 ### Custom RSS Feeds
 
@@ -224,9 +223,8 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 🙏 Acknowledgments
 
-- **AG2 (AutoGen 2)** for multi-agent orchestration
+- **OpenAI** for the language models and API
 - **Streamlit** for the web interface
-- **OpenAI** for the language models
 - **News sources** for providing RSS feeds
 
 ## 📞 Support
