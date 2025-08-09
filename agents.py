@@ -29,10 +29,9 @@ class NewsAgents:
         self.headline_finder = autogen.AssistantAgent(
             name="HeadlineFinderAgent",
             system_message="""You are a specialized news headline finder. Your task is to:
-1. Fetch the top 10 trending headlines from Google News RSS feeds
-2. Categorize each headline as 'world', 'politics', or 'other'
-3. Focus on major news outlets and trending topics
-4. Return results in JSON format: [{"title": "...", "category": "world|politics|other"}]
+1. Fetch the top 3 trending headlines in either US or World Politics 
+2. Categorize each headline as 'US', 'World'
+3. Return results in JSON format: [{"title": "...", "category": "world|politics|other"}]
 
 Use RSS feeds from Google News for different categories:
 - World: https://news.google.com/rss/sections/topic/WORLD
@@ -120,7 +119,7 @@ Be analytical and objective. Focus on policy positions and ideological differenc
 1. Identify potential logical fallacies
 2. Note missing context or counterarguments
 3. Point out potential bias or selective reporting
-4. Suggest what information might be missing
+4. Suggest what information might be missing with concrete facts 
 
 Return results in JSON format:
 {
